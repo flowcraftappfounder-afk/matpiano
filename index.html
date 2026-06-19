@@ -3,358 +3,289 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-<title>Piano Mat — Prototipo</title>
+<title>Piano Mat</title>
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
   body {
-    background: #0a0a0a;
-    color: #fff;
-    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', sans-serif;
-    height: 100dvh;
-    overflow: hidden;
-    display: flex;
-    flex-direction: column;
+    background: #0a0a0a; color: #fff;
+    font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+    height: 100dvh; overflow: hidden;
+    display: flex; flex-direction: column;
   }
   #header {
     padding: 12px 16px 8px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    flex-shrink: 0;
-    z-index: 10;
+    display: flex; justify-content: space-between; align-items: center;
+    flex-shrink: 0; z-index: 10;
   }
-  #header h1 { font-size: 15px; font-weight: 500; letter-spacing: -0.01em; color: #fff; }
+  #header h1 { font-size: 15px; font-weight: 500; }
   #status { font-size: 12px; color: #666; display: flex; align-items: center; gap: 6px; }
-  #status-dot { width: 6px; height: 6px; border-radius: 50%; background: #444; transition: background 0.3s; }
-  #status-dot.ready { background: #22c55e; }
-  #status-dot.loading { background: #f59e0b; animation: pulse 1s infinite; }
-  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
-  #canvas-wrap { position: relative; flex: 1; overflow: hidden; }
-  #video {
-    position: absolute;
+  #dot { width: 6px; height: 6px; border-radius: 50%; background: #444; transition: background 0.3s; }
+  #dot.on { background: #22c55e; }
+  #dot.loading { background: #f59e0b; animation: pulse 1s infinite; }
+  @keyframes pulse { 0%,100%{opacity:1}50%{opacity:0.3} }
+  #wrap { position: relative; flex: 1; overflow: hidden; }
+  #video { display: none; width: 1px; height: 1px; position: absolute; }
+  #main-canvas {
+    position: absolute; top: 0; left: 0;
     width: 100%; height: 100%;
-    object-fit: cover;
-    display: none;
-  }
-  #finger-canvas {
-    position: absolute;
-    top: 0; left: 0;
-    width: 100%; height: 100%;
-    pointer-events: none;
-    display: none;
   }
   #keys-bar {
-    position: absolute;
-    bottom: 0; left: 0; right: 0;
-    height: 140px;
-    display: flex;
-    pointer-events: none;
+    position: absolute; bottom: 0; left: 0; right: 0;
+    height: 130px; display: flex; pointer-events: none;
   }
-  .white-key {
+  .key {
     flex: 1;
-    background: rgba(255,255,255,0.08);
-    border: 1px solid rgba(255,255,255,0.15);
+    background: rgba(255,255,255,0.07);
+    border: 1px solid rgba(255,255,255,0.13);
     border-top: none;
-    display: flex;
-    align-items: flex-end;
-    justify-content: center;
-    padding-bottom: 10px;
-    transition: background 0.05s;
+    display: flex; align-items: flex-end; justify-content: center;
+    padding-bottom: 10px; transition: background 0.05s;
   }
-  .white-key.active { background: rgba(120,80,255,0.55); border-color: rgba(150,110,255,0.8); }
-  .white-key span { font-size: 11px; font-weight: 500; color: rgba(255,255,255,0.4); }
-  .white-key.active span { color: rgba(255,255,255,0.9); }
-  #start-btn {
-    position: absolute;
-    top: 50%; left: 50%;
-    transform: translate(-50%, -50%);
+  .key.active { background: rgba(120,80,255,0.5); border-color: rgba(160,120,255,0.8); }
+  .key span { font-size: 10px; font-weight: 500; color: rgba(255,255,255,0.35); }
+  .key.active span { color: #fff; }
+  #btn {
+    position: absolute; top: 50%; left: 50%;
+    transform: translate(-50%,-50%);
     background: rgba(255,255,255,0.06);
     border: 0.5px solid rgba(255,255,255,0.2);
-    border-radius: 14px;
-    color: #fff;
-    font-size: 15px;
-    font-family: inherit;
-    font-weight: 500;
-    padding: 14px 28px;
-    cursor: pointer;
+    border-radius: 14px; color: #fff;
+    font-size: 15px; font-family: inherit; font-weight: 500;
+    padding: 14px 28px; cursor: pointer;
     -webkit-tap-highlight-color: transparent;
   }
-  #note-display {
-    position: absolute;
-    top: 16px; left: 50%;
+  #note {
+    position: absolute; top: 16px; left: 50%;
     transform: translateX(-50%);
-    font-size: 48px;
-    font-weight: 300;
-    color: rgba(255,255,255,0.9);
-    opacity: 0;
-    transition: opacity 0.1s;
+    font-size: 48px; font-weight: 300;
+    opacity: 0; transition: opacity 0.1s;
     pointer-events: none;
-    display: none;
   }
-  #note-display.show { opacity: 1; }
-  #landmark-info {
-    position: absolute;
-    bottom: 155px; left: 16px;
-    font-size: 11px;
-    color: rgba(255,255,255,0.3);
-    display: none;
-    line-height: 1.6;
+  #note.show { opacity: 1; }
+  #info {
+    position: absolute; bottom: 145px; left: 16px;
+    font-size: 11px; color: rgba(255,255,255,0.3);
+    line-height: 1.6; display: none;
   }
 </style>
 </head>
 <body>
-
 <div id="header">
   <h1>Piano Mat</h1>
-  <div id="status">
-    <div id="status-dot"></div>
-    <span id="status-text">listo</span>
-  </div>
+  <div id="status"><div id="dot"></div><span id="stxt">listo</span></div>
 </div>
-
-<div id="canvas-wrap">
+<div id="wrap">
   <video id="video" playsinline autoplay muted></video>
-  <canvas id="finger-canvas"></canvas>
+  <canvas id="main-canvas"></canvas>
   <div id="keys-bar"></div>
-  <button id="start-btn">Activar cámara</button>
-  <div id="note-display"></div>
-  <div id="landmark-info"></div>
+  <button id="btn">Activar cámara</button>
+  <div id="note"></div>
+  <div id="info"></div>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands@0.4.1646424915/hands.js" crossorigin="anonymous"></script>
-<script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils@0.3.1620248257/drawing_utils.js" crossorigin="anonymous"></script>
-
 <script>
 const NOTES = ['Do','Re','Mi','Fa','Sol','La','Si','Do+'];
 const FREQS = [261.63,293.66,329.63,349.23,392.00,440.00,493.88,523.25];
+const TIPS = [4,8,12,16,20];
 
-let audioCtx = null;
-let keysEl = [];
-let activeKeys = new Set();
-let noteTimers = {};
-let fingerCanvas, fCtx, videoEl;
-let handsModel = null;
-let animFrame = null;
+let audio, keysEl = [], activeKeys = new Set(), noteTimers = {};
+let canvas, ctx, video, hands;
+let noteTimer2 = null;
+let running = false;
 
-function initAudio() {
-  if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+function $(id){ return document.getElementById(id); }
+
+function initAudio(){
+  if(!audio) audio = new (window.AudioContext||window.webkitAudioContext)();
 }
 
-function playNote(idx) {
-  if (!audioCtx) return;
-  const osc = audioCtx.createOscillator();
-  const gain = audioCtx.createGain();
-  osc.connect(gain);
-  gain.connect(audioCtx.destination);
-  osc.type = 'triangle';
-  osc.frequency.setValueAtTime(FREQS[idx], audioCtx.currentTime);
-  gain.gain.setValueAtTime(0.4, audioCtx.currentTime);
-  gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 1.2);
-  osc.start();
-  osc.stop(audioCtx.currentTime + 1.2);
+function playNote(i){
+  if(!audio) return;
+  const o = audio.createOscillator(), g = audio.createGain();
+  o.connect(g); g.connect(audio.destination);
+  o.type = 'triangle';
+  o.frequency.setValueAtTime(FREQS[i], audio.currentTime);
+  g.gain.setValueAtTime(0.4, audio.currentTime);
+  g.gain.exponentialRampToValueAtTime(0.001, audio.currentTime+1.2);
+  o.start(); o.stop(audio.currentTime+1.2);
 }
 
-function buildKeyboard() {
-  const bar = document.getElementById('keys-bar');
-  bar.innerHTML = '';
-  keysEl = [];
-  NOTES.forEach((note) => {
+function buildKeys(){
+  const bar = $('keys-bar');
+  NOTES.forEach(n => {
     const k = document.createElement('div');
-    k.className = 'white-key';
-    k.innerHTML = `<span>${note}</span>`;
+    k.className = 'key';
+    k.innerHTML = `<span>${n}</span>`;
     bar.appendChild(k);
     keysEl.push(k);
   });
 }
 
-function getKeyZones() {
-  const wrap = document.getElementById('canvas-wrap');
-  const wrapRect = wrap.getBoundingClientRect();
-  return keysEl.map((k, i) => {
+function getZones(){
+  const wr = $('wrap').getBoundingClientRect();
+  return keysEl.map((k,i)=>{
     const r = k.getBoundingClientRect();
-    return { x: r.left - wrapRect.left, y: r.top - wrapRect.top, w: r.width, h: r.height, idx: i };
+    return {x:r.left-wr.left, y:r.top-wr.top, w:r.width, h:r.height, i};
   });
 }
 
-function setupCanvas() {
-  const wrap = document.getElementById('canvas-wrap');
-  fingerCanvas = document.getElementById('finger-canvas');
-  videoEl = document.getElementById('video');
-  const resize = () => {
-    fingerCanvas.width = wrap.offsetWidth;
-    fingerCanvas.height = wrap.offsetHeight;
+function setupCanvas(){
+  canvas = $('main-canvas');
+  video = $('video');
+  ctx = canvas.getContext('2d');
+  const resize = ()=>{
+    const wr = $('wrap');
+    canvas.width = wr.offsetWidth;
+    canvas.height = wr.offsetHeight;
   };
   resize();
   window.addEventListener('resize', resize);
-  fCtx = fingerCanvas.getContext('2d');
 }
 
-async function startCamera() {
+// Off-screen canvas to feed MediaPipe — key fix for iOS
+let offscreen = null;
+let offCtx = null;
+
+function getOffscreen(w, h){
+  if(!offscreen){ offscreen = document.createElement('canvas'); }
+  if(offscreen.width !== w || offscreen.height !== h){
+    offscreen.width = w; offscreen.height = h;
+  }
+  if(!offCtx) offCtx = offscreen.getContext('2d');
+  return {offscreen, offCtx};
+}
+
+async function startCamera(){
   initAudio();
-  document.getElementById('start-btn').style.display = 'none';
-  document.getElementById('status-dot').className = 'loading';
-  document.getElementById('status-text').textContent = 'iniciando…';
+  $('btn').style.display = 'none';
+  $('dot').className = 'loading';
+  $('stxt').textContent = 'iniciando…';
 
   try {
-    // Request rear camera directly — bypasses MediaPipe Camera Utils
     const stream = await navigator.mediaDevices.getUserMedia({
-      video: {
-        facingMode: { exact: 'environment' },
-        width: { ideal: 1280 },
-        height: { ideal: 720 }
-      },
+      video: { facingMode: { exact: 'environment' }, width:{ideal:1280}, height:{ideal:720} },
       audio: false
     });
-
-    videoEl.srcObject = stream;
-    videoEl.style.display = 'block';
-    fingerCanvas.style.display = 'block';
-    document.getElementById('note-display').style.display = 'block';
-    document.getElementById('landmark-info').style.display = 'block';
-
-    await videoEl.play();
-    initMediaPipe();
-
-  } catch(e) {
-    // Fallback: try without exact constraint
-    console.warn('exact environment failed, trying ideal:', e);
+    video.srcObject = stream;
+    await video.play();
+  } catch(e){
     try {
       const stream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: 'environment' },
-        audio: false
+        video: { facingMode: 'environment' }, audio: false
       });
-      videoEl.srcObject = stream;
-      videoEl.style.display = 'block';
-      fingerCanvas.style.display = 'block';
-      document.getElementById('note-display').style.display = 'block';
-      document.getElementById('landmark-info').style.display = 'block';
-      await videoEl.play();
-      initMediaPipe();
-    } catch(e2) {
-      document.getElementById('status-text').textContent = 'error de cámara';
-      document.getElementById('start-btn').style.display = 'block';
-      console.error(e2);
+      video.srcObject = stream;
+      await video.play();
+    } catch(e2){
+      $('stxt').textContent = 'error';
+      $('btn').style.display = 'block';
+      return;
     }
   }
+
+  $('info').style.display = 'block';
+
+  hands = new Hands({
+    locateFile: f=>`https://cdn.jsdelivr.net/npm/@mediapipe/hands@0.4.1646424915/${f}`
+  });
+  hands.setOptions({
+    maxNumHands:2, modelComplexity:1,
+    minDetectionConfidence:0.7, minTrackingConfidence:0.6
+  });
+  hands.onResults(onResults);
+
+  $('dot').className = 'on';
+  $('stxt').textContent = 'detectando…';
+  running = true;
+  loop();
 }
 
-function initMediaPipe() {
-  handsModel = new Hands({
-    locateFile: f => `https://cdn.jsdelivr.net/npm/@mediapipe/hands@0.4.1646424915/${f}`
-  });
-  handsModel.setOptions({
-    maxNumHands: 2,
-    modelComplexity: 1,
-    minDetectionConfidence: 0.7,
-    minTrackingConfidence: 0.6
-  });
-  handsModel.onResults(onResults);
-
-  document.getElementById('status-dot').className = 'ready';
-  document.getElementById('status-text').textContent = 'detectando…';
-
-  // Manual loop instead of Camera Utils
-  async function detect() {
-    if (videoEl.readyState >= 2) {
-      await handsModel.send({ image: videoEl });
-    }
-    animFrame = requestAnimationFrame(detect);
+async function loop(){
+  if(!running) return;
+  if(video.readyState >= 2){
+    const vw = video.videoWidth || 640;
+    const vh = video.videoHeight || 480;
+    // Draw video to offscreen canvas — MediaPipe reads from here, NOT from video directly
+    const {offscreen, offCtx} = getOffscreen(vw, vh);
+    offCtx.drawImage(video, 0, 0, vw, vh);
+    await hands.send({image: offscreen});
   }
-  detect();
+  requestAnimationFrame(loop);
 }
 
-const FINGER_TIPS = [4, 8, 12, 16, 20];
-let noteHideTimer = null;
+function showNote(name){
+  const el = $('note');
+  el.textContent = name;
+  el.classList.add('show');
+  if(noteTimer2) clearTimeout(noteTimer2);
+  noteTimer2 = setTimeout(()=>el.classList.remove('show'), 800);
+}
 
-function onResults(results) {
-  const W = fingerCanvas.width;
-  const H = fingerCanvas.height;
-  fCtx.clearRect(0, 0, W, H);
+function onResults(results){
+  const W = canvas.width, H = canvas.height;
+  ctx.clearRect(0,0,W,H);
 
-  // Mirror only if front camera — rear camera no mirror needed
-  // We won't mirror since we're using rear camera
-  fCtx.save();
+  // Draw video frame onto main canvas
+  ctx.drawImage(video, 0, 0, W, H);
 
+  const zones = getZones();
   const nowActive = new Set();
-  const zones = getKeyZones();
-  let detectedFingers = 0;
+  let fingers = 0;
 
-  if (results.multiHandLandmarks) {
-    results.multiHandLandmarks.forEach((landmarks) => {
-      const CONNECTIONS = [
+  if(results.multiHandLandmarks){
+    results.multiHandLandmarks.forEach(lms => {
+      const CONN = [
         [0,1],[1,2],[2,3],[3,4],
         [0,5],[5,6],[6,7],[7,8],
         [5,9],[9,10],[10,11],[11,12],
         [9,13],[13,14],[14,15],[15,16],
         [13,17],[17,18],[18,19],[19,20],[0,17]
       ];
-
-      fCtx.strokeStyle = 'rgba(150,100,255,0.4)';
-      fCtx.lineWidth = 1.5;
-      CONNECTIONS.forEach(([a,b]) => {
-        const lA = landmarks[a], lB = landmarks[b];
-        fCtx.beginPath();
-        fCtx.moveTo(lA.x * W, lA.y * H);
-        fCtx.lineTo(lB.x * W, lB.y * H);
-        fCtx.stroke();
+      ctx.strokeStyle = 'rgba(150,100,255,0.5)';
+      ctx.lineWidth = 2;
+      CONN.forEach(([a,b])=>{
+        ctx.beginPath();
+        ctx.moveTo(lms[a].x*W, lms[a].y*H);
+        ctx.lineTo(lms[b].x*W, lms[b].y*H);
+        ctx.stroke();
       });
-
-      landmarks.forEach((lm, li) => {
-        const x = lm.x * W;
-        const y = lm.y * H;
-        const isTip = FINGER_TIPS.includes(li);
-        fCtx.beginPath();
-        fCtx.arc(x, y, isTip ? 8 : 4, 0, Math.PI * 2);
-        fCtx.fillStyle = isTip ? 'rgba(180,130,255,0.9)' : 'rgba(255,255,255,0.5)';
-        fCtx.fill();
-        if (isTip) {
-          detectedFingers++;
-          zones.forEach(zone => {
-            if (x >= zone.x && x <= zone.x + zone.w && y >= zone.y && y <= zone.y + zone.h) {
-              nowActive.add(zone.idx);
-            }
+      lms.forEach((lm,li)=>{
+        const x=lm.x*W, y=lm.y*H;
+        const tip = TIPS.includes(li);
+        ctx.beginPath();
+        ctx.arc(x,y,tip?9:4,0,Math.PI*2);
+        ctx.fillStyle = tip ? 'rgba(200,150,255,0.95)' : 'rgba(255,255,255,0.5)';
+        ctx.fill();
+        if(tip){
+          fingers++;
+          zones.forEach(z=>{
+            if(x>=z.x && x<=z.x+z.w && y>=z.y && y<=z.y+z.h) nowActive.add(z.i);
           });
         }
       });
     });
   }
 
-  fCtx.restore();
+  $('info').textContent = results.multiHandLandmarks
+    ? `manos: ${results.multiHandLandmarks.length}  dedos: ${fingers}`
+    : 'buscando manos…';
 
-  document.getElementById('landmark-info').textContent =
-    results.multiHandLandmarks
-      ? `manos: ${results.multiHandLandmarks.length}  dedos: ${detectedFingers}`
-      : 'buscando manos…';
-
-  nowActive.forEach(idx => {
-    if (!activeKeys.has(idx)) {
-      playNote(idx);
-      showNote(NOTES[idx]);
-      keysEl[idx].classList.add('active');
-      if (noteTimers[idx]) clearTimeout(noteTimers[idx]);
-      noteTimers[idx] = setTimeout(() => { activeKeys.delete(idx); }, 300);
+  nowActive.forEach(i=>{
+    if(!activeKeys.has(i)){
+      playNote(i); showNote(NOTES[i]);
+      keysEl[i].classList.add('active');
+      if(noteTimers[i]) clearTimeout(noteTimers[i]);
+      noteTimers[i] = setTimeout(()=>activeKeys.delete(i), 300);
     }
   });
-
-  activeKeys.forEach(idx => {
-    if (!nowActive.has(idx)) keysEl[idx].classList.remove('active');
-  });
-
+  activeKeys.forEach(i=>{ if(!nowActive.has(i)) keysEl[i].classList.remove('active'); });
   activeKeys = nowActive;
 }
 
-function showNote(name) {
-  const el = document.getElementById('note-display');
-  el.textContent = name;
-  el.classList.add('show');
-  if (noteHideTimer) clearTimeout(noteHideTimer);
-  noteHideTimer = setTimeout(() => el.classList.remove('show'), 800);
-}
-
-buildKeyboard();
+buildKeys();
 setupCanvas();
-document.getElementById('start-btn').addEventListener('click', startCamera);
-document.getElementById('status-dot').classList.add('ready');
+$('btn').addEventListener('click', startCamera);
+$('dot').classList.add('on');
 </script>
 </body>
 </html>
