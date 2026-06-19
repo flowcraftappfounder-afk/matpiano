@@ -6,7 +6,6 @@
 <title>Piano Mat — Prototipo</title>
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
-
   body {
     background: #0a0a0a;
     color: #fff;
@@ -16,7 +15,6 @@
     display: flex;
     flex-direction: column;
   }
-
   #header {
     padding: 12px 16px 8px;
     display: flex;
@@ -25,56 +23,26 @@
     flex-shrink: 0;
     z-index: 10;
   }
-
-  #header h1 {
-    font-size: 15px;
-    font-weight: 500;
-    letter-spacing: -0.01em;
-    color: #fff;
-  }
-
-  #status {
-    font-size: 12px;
-    color: #666;
-    display: flex;
-    align-items: center;
-    gap: 6px;
-  }
-
-  #status-dot {
-    width: 6px;
-    height: 6px;
-    border-radius: 50%;
-    background: #444;
-    transition: background 0.3s;
-  }
-
+  #header h1 { font-size: 15px; font-weight: 500; letter-spacing: -0.01em; color: #fff; }
+  #status { font-size: 12px; color: #666; display: flex; align-items: center; gap: 6px; }
+  #status-dot { width: 6px; height: 6px; border-radius: 50%; background: #444; transition: background 0.3s; }
   #status-dot.ready { background: #22c55e; }
   #status-dot.loading { background: #f59e0b; animation: pulse 1s infinite; }
-
   @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
-
-  #canvas-wrap {
-    position: relative;
-    flex: 1;
-    overflow: hidden;
-  }
-
+  #canvas-wrap { position: relative; flex: 1; overflow: hidden; }
   #video {
     position: absolute;
     width: 100%; height: 100%;
     object-fit: cover;
-    transform: scaleX(-1);
     display: none;
   }
-
-  #overlay {
+  #finger-canvas {
     position: absolute;
     top: 0; left: 0;
     width: 100%; height: 100%;
     pointer-events: none;
+    display: none;
   }
-
   #keys-bar {
     position: absolute;
     bottom: 0; left: 0; right: 0;
@@ -82,43 +50,20 @@
     display: flex;
     pointer-events: none;
   }
-
   .white-key {
     flex: 1;
     background: rgba(255,255,255,0.08);
     border: 1px solid rgba(255,255,255,0.15);
     border-top: none;
-    position: relative;
-    transition: background 0.05s;
     display: flex;
     align-items: flex-end;
     justify-content: center;
     padding-bottom: 10px;
+    transition: background 0.05s;
   }
-
-  .white-key.active {
-    background: rgba(120, 80, 255, 0.55);
-    border-color: rgba(150,110,255,0.8);
-  }
-
-  .white-key span {
-    font-size: 11px;
-    font-weight: 500;
-    color: rgba(255,255,255,0.4);
-    letter-spacing: 0.02em;
-  }
-
+  .white-key.active { background: rgba(120,80,255,0.55); border-color: rgba(150,110,255,0.8); }
+  .white-key span { font-size: 11px; font-weight: 500; color: rgba(255,255,255,0.4); }
   .white-key.active span { color: rgba(255,255,255,0.9); }
-
-  .black-key-wrap {
-    position: absolute;
-    top: 0;
-    display: flex;
-    pointer-events: none;
-    width: 100%;
-    height: 80px;
-  }
-
   #start-btn {
     position: absolute;
     top: 50%; left: 50%;
@@ -132,48 +77,21 @@
     font-weight: 500;
     padding: 14px 28px;
     cursor: pointer;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    letter-spacing: -0.01em;
     -webkit-tap-highlight-color: transparent;
   }
-
-  #start-btn:active { background: rgba(255,255,255,0.12); }
-
-  #start-btn svg { width: 20px; height: 20px; opacity: 0.7; }
-
-  #mode-toggle {
-    position: absolute;
-    top: 12px; right: 16px;
-    background: rgba(255,255,255,0.06);
-    border: 0.5px solid rgba(255,255,255,0.15);
-    border-radius: 8px;
-    color: rgba(255,255,255,0.6);
-    font-size: 12px;
-    font-family: inherit;
-    padding: 6px 12px;
-    cursor: pointer;
-    display: none;
-    -webkit-tap-highlight-color: transparent;
-  }
-
   #note-display {
     position: absolute;
     top: 16px; left: 50%;
     transform: translateX(-50%);
     font-size: 48px;
     font-weight: 300;
-    letter-spacing: -0.03em;
     color: rgba(255,255,255,0.9);
     opacity: 0;
     transition: opacity 0.1s;
     pointer-events: none;
     display: none;
   }
-
   #note-display.show { opacity: 1; }
-
   #landmark-info {
     position: absolute;
     bottom: 155px; left: 16px;
@@ -182,26 +100,6 @@
     display: none;
     line-height: 1.6;
   }
-
-  #instructions {
-    position: absolute;
-    bottom: 155px;
-    left: 0; right: 0;
-    text-align: center;
-    font-size: 12px;
-    color: rgba(255,255,255,0.3);
-    display: none;
-    padding: 0 20px;
-    line-height: 1.6;
-  }
-
-  #finger-canvas {
-    position: absolute;
-    top: 0; left: 0;
-    width: 100%; height: 100%;
-    pointer-events: none;
-    display: none;
-  }
 </style>
 </head>
 <body>
@@ -209,47 +107,34 @@
 <div id="header">
   <h1>Piano Mat</h1>
   <div id="status">
-    <div id="status-dot" class="loading"></div>
-    <span id="status-text">cargando…</span>
+    <div id="status-dot"></div>
+    <span id="status-text">listo</span>
   </div>
 </div>
 
 <div id="canvas-wrap">
   <video id="video" playsinline autoplay muted></video>
   <canvas id="finger-canvas"></canvas>
-  <canvas id="overlay"></canvas>
-
   <div id="keys-bar"></div>
-
-  <div id="start-btn">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-      <path d="M15 10l4.553-2.276A1 1 0 0121 8.723v6.554a1 1 0 01-1.447.894L15 14M3 8a2 2 0 012-2h8a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V8z"/>
-    </svg>
-    Activar cámara
-  </div>
-
-  <button id="mode-toggle">modo: cenital</button>
+  <button id="start-btn">Activar cámara</button>
   <div id="note-display"></div>
   <div id="landmark-info"></div>
-  <div id="instructions">Coloca las manos sobre las teclas<br>Vista cenital recomendada</div>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands@0.4.1646424915/hands.js" crossorigin="anonymous"></script>
-<script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils@0.3.1640029074/camera_utils.js" crossorigin="anonymous"></script>
 <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils@0.3.1620248257/drawing_utils.js" crossorigin="anonymous"></script>
 
 <script>
-const NOTES = ['Do', 'Re', 'Mi', 'Fa', 'Sol', 'La', 'Si', 'Do+'];
-const FREQS = [261.63, 293.66, 329.63, 349.23, 392.00, 440.00, 493.88, 523.25];
+const NOTES = ['Do','Re','Mi','Fa','Sol','La','Si','Do+'];
+const FREQS = [261.63,293.66,329.63,349.23,392.00,440.00,493.88,523.25];
 
 let audioCtx = null;
 let keysEl = [];
 let activeKeys = new Set();
 let noteTimers = {};
-let running = false;
-let fingerCanvas, fCtx;
-let overlayCanvas, oCtx;
-let videoEl;
+let fingerCanvas, fCtx, videoEl;
+let handsModel = null;
+let animFrame = null;
 
 function initAudio() {
   if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
@@ -273,7 +158,7 @@ function buildKeyboard() {
   const bar = document.getElementById('keys-bar');
   bar.innerHTML = '';
   keysEl = [];
-  NOTES.forEach((note, i) => {
+  NOTES.forEach((note) => {
     const k = document.createElement('div');
     k.className = 'white-key';
     k.innerHTML = `<span>${note}</span>`;
@@ -283,153 +168,149 @@ function buildKeyboard() {
 }
 
 function getKeyZones() {
-  const bar = document.getElementById('keys-bar');
   const wrap = document.getElementById('canvas-wrap');
   const wrapRect = wrap.getBoundingClientRect();
-  const zones = [];
-  keysEl.forEach((k, i) => {
+  return keysEl.map((k, i) => {
     const r = k.getBoundingClientRect();
-    zones.push({
-      x: r.left - wrapRect.left,
-      y: r.top - wrapRect.top,
-      w: r.width,
-      h: r.height,
-      idx: i
-    });
+    return { x: r.left - wrapRect.left, y: r.top - wrapRect.top, w: r.width, h: r.height, idx: i };
   });
-  return zones;
 }
 
-function setupCanvases() {
+function setupCanvas() {
   const wrap = document.getElementById('canvas-wrap');
   fingerCanvas = document.getElementById('finger-canvas');
-  overlayCanvas = document.getElementById('overlay');
   videoEl = document.getElementById('video');
-
   const resize = () => {
-    const w = wrap.offsetWidth;
-    const h = wrap.offsetHeight;
-    fingerCanvas.width = w;
-    fingerCanvas.height = h;
-    overlayCanvas.width = w;
-    overlayCanvas.height = h;
-    videoEl.style.width = w + 'px';
-    videoEl.style.height = h + 'px';
+    fingerCanvas.width = wrap.offsetWidth;
+    fingerCanvas.height = wrap.offsetHeight;
   };
   resize();
   window.addEventListener('resize', resize);
-
   fCtx = fingerCanvas.getContext('2d');
-  oCtx = overlayCanvas.getContext('2d');
 }
 
 async function startCamera() {
   initAudio();
   document.getElementById('start-btn').style.display = 'none';
-  document.getElementById('status-text').textContent = 'iniciando cámara…';
-
-  videoEl.style.display = 'block';
-  fingerCanvas.style.display = 'block';
-  document.getElementById('note-display').style.display = 'block';
-  document.getElementById('instructions').style.display = 'block';
-  document.getElementById('mode-toggle').style.display = 'block';
-  document.getElementById('landmark-info').style.display = 'block';
+  document.getElementById('status-dot').className = 'loading';
+  document.getElementById('status-text').textContent = 'iniciando…';
 
   try {
+    // Request rear camera directly — bypasses MediaPipe Camera Utils
     const stream = await navigator.mediaDevices.getUserMedia({
-      video: { facingMode: { ideal: "environment" }, width: { ideal: 1280 }, height: { ideal: 720 } }
+      video: {
+        facingMode: { exact: 'environment' },
+        width: { ideal: 1280 },
+        height: { ideal: 720 }
+      },
+      audio: false
     });
+
     videoEl.srcObject = stream;
+    videoEl.style.display = 'block';
+    fingerCanvas.style.display = 'block';
+    document.getElementById('note-display').style.display = 'block';
+    document.getElementById('landmark-info').style.display = 'block';
+
     await videoEl.play();
     initMediaPipe();
+
   } catch(e) {
-    document.getElementById('status-text').textContent = 'error de cámara';
-    console.error(e);
+    // Fallback: try without exact constraint
+    console.warn('exact environment failed, trying ideal:', e);
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: 'environment' },
+        audio: false
+      });
+      videoEl.srcObject = stream;
+      videoEl.style.display = 'block';
+      fingerCanvas.style.display = 'block';
+      document.getElementById('note-display').style.display = 'block';
+      document.getElementById('landmark-info').style.display = 'block';
+      await videoEl.play();
+      initMediaPipe();
+    } catch(e2) {
+      document.getElementById('status-text').textContent = 'error de cámara';
+      document.getElementById('start-btn').style.display = 'block';
+      console.error(e2);
+    }
   }
 }
 
 function initMediaPipe() {
-  const hands = new Hands({
+  handsModel = new Hands({
     locateFile: f => `https://cdn.jsdelivr.net/npm/@mediapipe/hands@0.4.1646424915/${f}`
   });
-
-  hands.setOptions({
+  handsModel.setOptions({
     maxNumHands: 2,
     modelComplexity: 1,
     minDetectionConfidence: 0.7,
     minTrackingConfidence: 0.6
   });
+  handsModel.onResults(onResults);
 
-  hands.onResults(onResults);
+  document.getElementById('status-dot').className = 'ready';
+  document.getElementById('status-text').textContent = 'detectando…';
 
-  const camera = new Camera(videoEl, {
-    onFrame: async () => { await hands.send({ image: videoEl }); },
-    width: 1280, height: 720
-  });
-
-  camera.start().then(() => {
-    document.getElementById('status-dot').className = 'status-dot ready';
-    document.getElementById('status-text').textContent = 'detectando…';
-    running = true;
-  });
+  // Manual loop instead of Camera Utils
+  async function detect() {
+    if (videoEl.readyState >= 2) {
+      await handsModel.send({ image: videoEl });
+    }
+    animFrame = requestAnimationFrame(detect);
+  }
+  detect();
 }
 
 const FINGER_TIPS = [4, 8, 12, 16, 20];
-let noteDisplay = null;
 let noteHideTimer = null;
 
 function onResults(results) {
-  if (!running) return;
-
   const W = fingerCanvas.width;
   const H = fingerCanvas.height;
-
   fCtx.clearRect(0, 0, W, H);
+
+  // Mirror only if front camera — rear camera no mirror needed
+  // We won't mirror since we're using rear camera
+  fCtx.save();
 
   const nowActive = new Set();
   const zones = getKeyZones();
   let detectedFingers = 0;
 
   if (results.multiHandLandmarks) {
-    results.multiHandLandmarks.forEach((landmarks, hi) => {
-      // Draw connections
-      fCtx.strokeStyle = 'rgba(150,100,255,0.4)';
-      fCtx.lineWidth = 1.5;
-
+    results.multiHandLandmarks.forEach((landmarks) => {
       const CONNECTIONS = [
         [0,1],[1,2],[2,3],[3,4],
         [0,5],[5,6],[6,7],[7,8],
         [5,9],[9,10],[10,11],[11,12],
         [9,13],[13,14],[14,15],[15,16],
-        [13,17],[17,18],[18,19],[19,20],
-        [0,17]
+        [13,17],[17,18],[18,19],[19,20],[0,17]
       ];
 
-      CONNECTIONS.forEach(([a, b]) => {
+      fCtx.strokeStyle = 'rgba(150,100,255,0.4)';
+      fCtx.lineWidth = 1.5;
+      CONNECTIONS.forEach(([a,b]) => {
         const lA = landmarks[a], lB = landmarks[b];
         fCtx.beginPath();
-        fCtx.moveTo((1 - lA.x) * W, lA.y * H);
-        fCtx.lineTo((1 - lB.x) * W, lB.y * H);
+        fCtx.moveTo(lA.x * W, lA.y * H);
+        fCtx.lineTo(lB.x * W, lB.y * H);
         fCtx.stroke();
       });
 
-      // Draw all landmarks
       landmarks.forEach((lm, li) => {
-        const x = (1 - lm.x) * W;
+        const x = lm.x * W;
         const y = lm.y * H;
         const isTip = FINGER_TIPS.includes(li);
-
         fCtx.beginPath();
         fCtx.arc(x, y, isTip ? 8 : 4, 0, Math.PI * 2);
         fCtx.fillStyle = isTip ? 'rgba(180,130,255,0.9)' : 'rgba(255,255,255,0.5)';
         fCtx.fill();
-
         if (isTip) {
           detectedFingers++;
-          // Check if fingertip is inside a key zone
           zones.forEach(zone => {
-            if (x >= zone.x && x <= zone.x + zone.w &&
-                y >= zone.y && y <= zone.y + zone.h) {
+            if (x >= zone.x && x <= zone.x + zone.w && y >= zone.y && y <= zone.y + zone.h) {
               nowActive.add(zone.idx);
             }
           });
@@ -438,29 +319,25 @@ function onResults(results) {
     });
   }
 
-  // Update landmark info
+  fCtx.restore();
+
   document.getElementById('landmark-info').textContent =
     results.multiHandLandmarks
       ? `manos: ${results.multiHandLandmarks.length}  dedos: ${detectedFingers}`
       : 'buscando manos…';
 
-  // Trigger notes for newly active keys
   nowActive.forEach(idx => {
     if (!activeKeys.has(idx)) {
       playNote(idx);
       showNote(NOTES[idx]);
       keysEl[idx].classList.add('active');
-      // Debounce: don't retrigger for 300ms
       if (noteTimers[idx]) clearTimeout(noteTimers[idx]);
       noteTimers[idx] = setTimeout(() => { activeKeys.delete(idx); }, 300);
     }
   });
 
-  // Deactivate keys no longer touched
   activeKeys.forEach(idx => {
-    if (!nowActive.has(idx)) {
-      keysEl[idx].classList.remove('active');
-    }
+    if (!nowActive.has(idx)) keysEl[idx].classList.remove('active');
   });
 
   activeKeys = nowActive;
@@ -474,20 +351,10 @@ function showNote(name) {
   noteHideTimer = setTimeout(() => el.classList.remove('show'), 800);
 }
 
-// Init
 buildKeyboard();
-setupCanvases();
-
+setupCanvas();
 document.getElementById('start-btn').addEventListener('click', startCamera);
-
-// Status initial
-document.getElementById('status-dot').className = 'loading';
-document.getElementById('status-text').textContent = 'listo';
-document.getElementById('status-dot').className = '';
-setTimeout(() => {
-  document.getElementById('status-dot').classList.add('ready');
-  document.getElementById('status-text').textContent = 'listo';
-}, 500);
+document.getElementById('status-dot').classList.add('ready');
 </script>
 </body>
 </html>
